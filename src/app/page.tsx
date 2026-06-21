@@ -1,65 +1,221 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState, useEffect } from 'react';
+
+interface Location {
+  latitude: number;
+  longitude: number;
+}
+
+interface TowRequest {
+  id: string;
+  vehicleType: string;
+  userName: string;
+  userEmail: string;
+  userPhone: string;
+  location: Location;
+  status: 'pending' | 'accepted' | 'completed' | 'cancelled' | 'waiting_confirmation' | 'disputed';
+  createdAt: string;
+}
+
+interface DriverApplication {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  licenseNumber: string;
+  vehicleInfo: string;
+  experience: number;
+  status: string;
+  createdAt: string;
+}
+
+export default function AdminDashboard() {
+  const [requests, setRequests] = useState<TowRequest[]>([]);
+  const [applications, setApplications] = useState<DriverApplication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedReqs, setExpandedReqs] = useState<Record<string, boolean>>({});
+  const [expandedApps, setExpandedApps] = useState<Record<number, boolean>>({});
+
+  const toggleReq = (id: string) => {
+    setExpandedReqs(p => ({ ...p, [id]: !p[id] }));
+  };
+
+  const toggleApp = (idx: number) => {
+    setExpandedApps(p => ({ ...p, [idx]: !p[idx] }));
+  };
+
+  const fetchData = async () => {
+    try {
+      const [reqRes, appRes] = await Promise.all([
+        fetch('http://localhost:5000/api/requests'),
+        fetch('http://localhost:5000/api/applications')
+      ]);
+      const reqData = await reqRes.json();
+      const appData = await appRes.json();
+      setRequests(reqData);
+      setApplications(appData);
+    } catch (err) {
+      console.error('Failed to fetch data', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const stats = {
+    total: requests.length,
+    pending: requests.filter(r => r.status === 'pending').length,
+    active: requests.filter(r => r.status === 'accepted' || r.status === 'waiting_confirmation').length,
+    completed: requests.filter(r => r.status === 'completed').length,
+    disputed: requests.filter(r => r.status === 'disputed').length,
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      <header>
+        <h1>System Overview</h1>
+        <div className="user-info">Admin User</div>
+      </header>
+
+      <div className="stats-grid">
+        <div className="stat-card">
+          <h4>Total Requests</h4>
+          <p>{stats.total}</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="stat-card" style={{ borderTopColor: 'var(--pending-orange)' }}>
+          <h4>Pending</h4>
+          <p>{stats.pending}</p>
         </div>
-      </main>
-    </div>
+        <div className="stat-card" style={{ borderTopColor: 'var(--admin-primary)' }}>
+          <h4>Active</h4>
+          <p>{stats.active}</p>
+        </div>
+        <div className="stat-card" style={{ borderTopColor: 'var(--danger-red)' }}>
+          <h4>Disputed</h4>
+          <p>{stats.disputed}</p>
+        </div>
+        <div className="stat-card" style={{ borderTopColor: 'var(--success-green)' }}>
+          <h4>Completed</h4>
+          <p>{stats.completed}</p>
+        </div>
+      </div>
+
+      <div className="grid-2-col">
+        <div className="card">
+          <h3>Recent Requests</h3>
+          <div className="responsive-list">
+            {loading ? <p style={{ padding: '20px', color: '#666' }}>Loading...</p> : (
+              requests.slice(0, 5).map((req) => {
+                const isExpanded = !!expandedReqs[req.id];
+                return (
+                  <div key={req.id} className={`list-item ${isExpanded ? 'expanded' : ''}`}>
+                    <div className="list-item-summary" onClick={() => toggleReq(req.id)}>
+                      <div className="list-item-info">
+                        <div className="info-col">
+                          <span className="info-label">Customer</span>
+                          <span className="info-value">{req.userName}</span>
+                        </div>
+                        <div className="info-col">
+                          <span className="info-label">Vehicle</span>
+                          <span className="info-value">{req.vehicleType}</span>
+                        </div>
+                        <div className="info-col">
+                          <span className="info-label">Status</span>
+                          <span className={`status-badge status-${req.status}`} style={{ display: 'inline-block', width: 'fit-content' }}>
+                            {req.status}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="list-item-chevron">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: '16px', height: '16px' }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="list-item-details">
+                      <div className="details-grid">
+                        <div className="details-block">
+                          <span className="details-label">Request ID</span>
+                          <span className="details-value">{req.id}</span>
+                        </div>
+                        <div className="details-block">
+                          <span className="details-label">Contact Details</span>
+                          <span className="details-value">{req.userPhone} | {req.userEmail}</span>
+                        </div>
+                        <div className="details-block">
+                          <span className="details-label">Location Coordinates</span>
+                          <span className="details-value">{req.location.latitude.toFixed(5)}, {req.location.longitude.toFixed(5)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+          <a href="/requests" style={{ display: 'block', marginTop: '15px', color: 'var(--admin-primary)', textDecoration: 'none' }}>View all requests →</a>
+        </div>
+
+        <div className="card">
+          <h3>Recent Applications</h3>
+          <div className="responsive-list">
+            {loading ? <p style={{ padding: '20px', color: '#666' }}>Loading...</p> : (
+              applications.slice(0, 5).map((app, idx) => {
+                const isExpanded = !!expandedApps[idx];
+                return (
+                  <div key={idx} className={`list-item ${isExpanded ? 'expanded' : ''}`}>
+                    <div className="list-item-summary" onClick={() => toggleApp(idx)}>
+                      <div className="list-item-info">
+                        <div className="info-col">
+                          <span className="info-label">Applicant Name</span>
+                          <span className="info-value">{app.fullName}</span>
+                        </div>
+                        <div className="info-col">
+                          <span className="info-label">Experience</span>
+                          <span className="info-value">{app.experience} yrs</span>
+                        </div>
+                        <div className="info-col">
+                          <span className="info-label">Status</span>
+                          <span className={`status-badge status-${app.status}`} style={{ display: 'inline-block', width: 'fit-content' }}>
+                            {app.status}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="list-item-chevron">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: '16px', height: '16px' }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="list-item-details">
+                      <div className="details-grid">
+                        <div className="details-block">
+                          <span className="details-label">Contact Details</span>
+                          <span className="details-value">{app.phoneNumber} | {app.email}</span>
+                        </div>
+                        <div className="details-block">
+                          <span className="details-label">License Number</span>
+                          <span className="details-value">{app.licenseNumber}</span>
+                        </div>
+                        <div className="details-block">
+                          <span className="details-label">Vehicle Info</span>
+                          <span className="details-value">{app.vehicleInfo}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+          <a href="/applications" style={{ display: 'block', marginTop: '15px', color: 'var(--admin-primary)', textDecoration: 'none' }}>View all applications →</a>
+        </div>
+      </div>
+    </>
   );
 }
