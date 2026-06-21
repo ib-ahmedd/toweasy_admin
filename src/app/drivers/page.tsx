@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 interface Driver {
   id: string;
@@ -16,16 +16,21 @@ interface Driver {
 export default function DriversPage() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedDrivers, setExpandedDrivers] = useState<Record<string, boolean>>({});
-  const toggleDriver = (id: string) => setExpandedDrivers(p => ({ ...p, [id]: !p[id] }));
+  const [expandedDrivers, setExpandedDrivers] = useState<
+    Record<string, boolean>
+  >({});
+  const toggleDriver = (id: string) =>
+    setExpandedDrivers((p) => ({ ...p, [id]: !p[id] }));
 
   const fetchDrivers = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/drivers');
+      const res = await fetch(
+        "https://toweasy-server.onrender.com/api/drivers"
+      );
       const data = await res.json();
       setDrivers(data);
     } catch (err) {
-      console.error('Failed to fetch drivers', err);
+      console.error("Failed to fetch drivers", err);
     } finally {
       setLoading(false);
     }
@@ -54,29 +59,45 @@ export default function DriversPage() {
       </header>
 
       <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "20px",
+          }}
+        >
           <h3>Verified Recovery Team</h3>
-          <div style={{ fontSize: '0.9rem', color: '#65676b' }}>
-            Total Verified Drivers: <strong>{drivers.length}</strong> (Online: <strong>{drivers.filter(d => d.isOnline).length}</strong>)
+          <div style={{ fontSize: "0.9rem", color: "#65676b" }}>
+            Total Verified Drivers: <strong>{drivers.length}</strong> (Online:{" "}
+            <strong>{drivers.filter((d) => d.isOnline).length}</strong>)
           </div>
         </div>
 
         <div className="responsive-list">
           {loading ? (
-            <p style={{ padding: '20px', color: '#666' }}>Loading drivers...</p>
+            <p style={{ padding: "20px", color: "#666" }}>Loading drivers...</p>
           ) : sortedDrivers.length === 0 ? (
-            <p style={{ textAlign: 'center', padding: '20px', color: '#65676b' }}>
+            <p
+              style={{ textAlign: "center", padding: "20px", color: "#65676b" }}
+            >
               No verified drivers found. Approved applications will appear here.
             </p>
           ) : (
             sortedDrivers.map((driver) => {
               const isExpanded = !!expandedDrivers[driver.id];
               const onlineBadge = driver.isOnline
-                ? { backgroundColor: '#d4edda', color: '#155724' }
-                : { backgroundColor: '#e4e6eb', color: '#65676b' };
+                ? { backgroundColor: "#d4edda", color: "#155724" }
+                : { backgroundColor: "#e4e6eb", color: "#65676b" };
               return (
-                <div key={driver.id} className={`list-item ${isExpanded ? 'expanded' : ''}`}>
-                  <div className="list-item-summary" onClick={() => toggleDriver(driver.id)}>
+                <div
+                  key={driver.id}
+                  className={`list-item ${isExpanded ? "expanded" : ""}`}
+                >
+                  <div
+                    className="list-item-summary"
+                    onClick={() => toggleDriver(driver.id)}
+                  >
                     <div className="list-item-info">
                       <div className="info-col">
                         <span className="info-label">Driver Name</span>
@@ -84,23 +105,51 @@ export default function DriversPage() {
                       </div>
                       <div className="info-col">
                         <span className="info-label">Status</span>
-                        <span className="status-badge" style={{ ...onlineBadge, display: 'inline-block', width: 'fit-content' }}>
-                          {driver.isOnline ? 'Online' : 'Offline'}
+                        <span
+                          className="status-badge"
+                          style={{
+                            ...onlineBadge,
+                            display: "inline-block",
+                            width: "fit-content",
+                          }}
+                        >
+                          {driver.isOnline ? "Online" : "Offline"}
                         </span>
                       </div>
                       <div className="info-col">
                         <span className="info-label">Location</span>
-                        <span className="info-value" style={{ fontSize: '0.85rem' }}>
-                          {driver.currentLocation && driver.isOnline
-                            ? `📍 ${driver.currentLocation.latitude.toFixed(3)}, ${driver.currentLocation.longitude.toFixed(3)}`
-                            : <span style={{ color: '#999', fontStyle: 'italic' }}>{driver.isOnline ? 'Pending' : '—'}</span>
-                          }
+                        <span
+                          className="info-value"
+                          style={{ fontSize: "0.85rem" }}
+                        >
+                          {driver.currentLocation && driver.isOnline ? (
+                            `📍 ${driver.currentLocation.latitude.toFixed(
+                              3
+                            )}, ${driver.currentLocation.longitude.toFixed(3)}`
+                          ) : (
+                            <span
+                              style={{ color: "#999", fontStyle: "italic" }}
+                            >
+                              {driver.isOnline ? "Pending" : "—"}
+                            </span>
+                          )}
                         </span>
                       </div>
                     </div>
                     <div className="list-item-chevron">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: '16px', height: '16px' }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2.5}
+                        stroke="currentColor"
+                        style={{ width: "16px", height: "16px" }}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+                        />
                       </svg>
                     </div>
                   </div>
@@ -108,21 +157,40 @@ export default function DriversPage() {
                     <div className="details-grid">
                       <div className="details-block">
                         <span className="details-label">Driver ID</span>
-                        <span className="details-value" style={{ fontFamily: 'monospace' }}>{driver.id}</span>
+                        <span
+                          className="details-value"
+                          style={{ fontFamily: "monospace" }}
+                        >
+                          {driver.id}
+                        </span>
                       </div>
                       <div className="details-block">
-                        <span className="details-label">Full GPS Coordinates</span>
+                        <span className="details-label">
+                          Full GPS Coordinates
+                        </span>
                         <span className="details-value">
-                          {driver.currentLocation && typeof driver.currentLocation.latitude === 'number' && driver.isOnline
-                            ? `📍 ${driver.currentLocation.latitude.toFixed(5)}, ${driver.currentLocation.longitude.toFixed(5)}`
-                            : <span style={{ color: '#999', fontStyle: 'italic' }}>{driver.isOnline ? 'Location pending' : 'Offline'}</span>
-                          }
+                          {driver.currentLocation &&
+                          typeof driver.currentLocation.latitude === "number" &&
+                          driver.isOnline ? (
+                            `📍 ${driver.currentLocation.latitude.toFixed(
+                              5
+                            )}, ${driver.currentLocation.longitude.toFixed(5)}`
+                          ) : (
+                            <span
+                              style={{ color: "#999", fontStyle: "italic" }}
+                            >
+                              {driver.isOnline ? "Location pending" : "Offline"}
+                            </span>
+                          )}
                         </span>
                       </div>
                       <div className="details-block">
                         <span className="details-label">Last Updated</span>
                         <span className="details-value">
-                          🕒 {driver.lastUpdated ? new Date(driver.lastUpdated).toLocaleString() : 'N/A'}
+                          🕒{" "}
+                          {driver.lastUpdated
+                            ? new Date(driver.lastUpdated).toLocaleString()
+                            : "N/A"}
                         </span>
                       </div>
                     </div>
